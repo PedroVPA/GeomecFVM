@@ -1,0 +1,31 @@
+$MeshFormat
+2.2 0 8
+$EndMeshFormat
+$PhysicalNames
+5
+1 801 "South"
+1 802 "East"
+1 803 "North"
+1 804 "West"
+2 1 "Soil"
+$EndPhysicalNames
+$Nodes
+6
+1 0 0 0
+2 1 0 0
+3 1 1 0
+4 0 1 0
+5 1 0.4999999999986921 0
+6 0 0.5000000000020595 0
+$EndNodes
+$Elements
+8
+1 1 2 801 1 1 2
+2 1 2 802 2 2 5
+3 1 2 802 2 5 3
+4 1 2 803 3 3 4
+5 1 2 804 4 4 6
+6 1 2 804 4 6 1
+7 3 2 1 1 1 2 5 6
+8 3 2 1 1 6 5 3 4
+$EndElements
