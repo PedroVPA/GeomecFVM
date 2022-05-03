@@ -339,7 +339,7 @@ class nlfv_displ:
         Cyx_nij = misc.co_normal
         Cyxn = misc.normal_proj
 
-        misc.conormal(mesh, rock.elastic.xx, misc)
+        misc.conormal(mesh, rock.elastic.yy, misc)
         Cyy_nij = misc.co_normal
         Cyyn = misc.normal_proj
 

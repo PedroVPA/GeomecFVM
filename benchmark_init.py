@@ -383,8 +383,8 @@ class set_rock:
         self.elastic = elastic_tensors(mesh,benchmark,flag_array)
 
         self.source = np.zeros(2*nel)
-        self.source[1::2] = benchmark.gravity*self.density
-           
+        self.source[1::2] = benchmark.gravity*self.density           
+
 class elastic_tensors:
 
     def __init__(self,mesh,benchmark,flag_array):

@@ -55,7 +55,7 @@ obs: caso o MOAB(Impress) retorne 'No such file in directory' é porque não tem
 '''
 start = time.time()
 
-malha = 'mesh/mec 1x2 quad.msh'
+malha = 'mesh/mec 2x2 right-tri.msh'
 mesh  = impress(mesh_file = malha, dim = 2)
 
 print(f"\nMesh generated successfuly! Only took {time.time()- start} seconds!")
@@ -91,7 +91,7 @@ prep_time = time.time()
 start = time.time()
 
 # case = 1.1 sem o ponto
-case = 26
+case = 23
 benchmark = set_benchmark(case,malha)
 
 print(f"Benchmark set successfuly! Only took {time.time()- start} seconds!")
