@@ -7,8 +7,8 @@ import time
 
 from preprocessor.meshHandle.finescaleMesh import FineScaleMesh as impress
 from benchmark_init import set_benchmark,set_rock,set_fluid, set_well,set_boundary, set_solution
-from nlfv_prepocessor import set_nlfv
-from MPFAH import MPFAH_flux, MPFAH_force
+from nlfv_param import set_nlfv
+from lfv_hp import MPFAH, MPSAH
 
 run_start = time.time()
 print('Run Time Started!')
@@ -55,7 +55,7 @@ obs: caso o MOAB(Impress) retorne 'No such file in directory' é porque não tem
 '''
 start = time.time()
 
-malha = 'mesh/mec 2x2 right-tri.msh'
+malha = 'mesh/mec 1x1 right-tri.msh'
 mesh  = impress(mesh_file = malha, dim = 2)
 
 print(f"\nMesh generated successfuly! Only took {time.time()- start} seconds!")
@@ -84,7 +84,8 @@ print('\n********************       SETING CASE         *******************\n')
     2.5 quadrado de lado 1, homogêneo, poisson = 0, em x = 0 -> Fy = 0 , x = 1 -> Fy = 0, y = 1 e y = 0 -> Fx = 0 e Fy = 0, resto dirichlet
     2. demiredzic et al 1998, totalmente dirichlet
     2. demiredzic et al 1998, com Fy = 5e9 N e u = 0 em x = 1, resto dirichlet
-    2.9 demiredzic et al 1998, com Fx = 0 e Fy = 0 em y = 0 e y = L, resto dirichlet
+    2.8 exemplo 1 de demiredzic et al 1998
+    2.9 1/4 de placa com furo
 ------------------------------------------------------------------------
 '''
 prep_time = time.time()
@@ -151,7 +152,7 @@ print('\n*********************   CONTINUITY-SOLVER   *********************\n')
 # Discretização do termo do fluxo de darcy usando o MPFA-H
 start = time.time()
 
-flux_discr = MPFAH_flux(mesh,fluids,wells,bc_val,nlfv)
+flux_discr = MPFAH(mesh,fluids,wells,bc_val,nlfv)
 
 print(f'Flux discretization done successfuly! Only took {time.time() - start} seconds!')
 
@@ -164,7 +165,7 @@ print('\n*********************   MOMENTUM-SOLVER   *********************\n')
 # Discretização do termo de tensao efetiva usando o MPFA-H
 start = time.time()
 
-stress_discr = MPFAH_force(mesh,rocks,bc_val,nlfv)
+stress_discr = MPSAH(mesh,rocks,bc_val,nlfv)
 
 print(f'Stress discretization done successfuly! Only took {time.time() - start} seconds!')
 

@@ -22,8 +22,10 @@ class bench_rock:
         
         group_1 = np.array([11,21,22,23,24,25,26,27]) # homogeneo, sem acoplamento
         group_2 = np.array([12]) # heterogeneo, sem acoplamento
-        group_3 = np.array([29]) # propriedades tiradas de Demirdzic,Martinovic & Ivankovic (1998)
-        
+        group_3 = np.array([28]) # propriedades tiradas do exemplo 1 de Demirdzic,Martinovic & Ivankovic (1988)
+        group_4 = np.array([29]) # propriedades tiradas do exemplo 1 de Demirdzic,Muzaferija (1994)
+
+
         if np.isin(case,group_1):
 
             self.density = np.zeros(1)
@@ -66,13 +68,26 @@ class bench_rock:
             self.perm = self.perm = np.zeros([1,2,2])
             self.perm[:] = np.eye(2) 
 
+        elif np.isin(case,group_4):
+
+            self.density = np.zeros(1)
+            self.compressibility = np.zeros(1)
+
+            self.porosity = np.zeros(1)
+
+            self.young = np.array([1e7])
+            self.poisson = np.array([0.3])
+
+            self.perm = self.perm = np.zeros([1,2,2])
+            self.perm[:] = np.eye(2)
+
 # Fluid properties
 class bench_fluid:
 
     def __init__(self,case):
         
         
-        group_1 = np.array([11,12,21,22,23,24,25,26,27,29]) # Monofásico com viscosidade 1
+        group_1 = np.array([11,12,21,22,23,24,25,26,27,28,29]) # Monofásico com viscosidade 1
 
         if np.isin(case,group_1):
             
@@ -306,32 +321,7 @@ class bc_val:
                                     [803,101,-1],
                                     [804,101,-1]])
 
-        if case == 'not yet implemented':
-
-            ## Pressão
-            
-            self.pressure = np.array([[801,101,1],
-                                      [802,201,0],
-                                      [803,102,0],
-                                      [804,201,0]])
-
-            ## Deslocamento 
-            #Horizontal 
-
-            self.hdispl = np.array([[801,101,0],
-                                    [802,101,0],
-                                    [803,101,0],
-                                    [804,101,0]])
-
-            ## Deslocamento 
-            #Vertical 
-
-            self.vdispl = np.array([[801,101,-1],
-                                    [802,201,-50e9],
-                                    [803,101,-1],
-                                    [804,101,-1]])
-
-        if case == 29:
+        if case == 28:
 
             ## Pressão
             
@@ -352,9 +342,37 @@ class bc_val:
             #Vertical 
 
             self.vdispl = np.array([[801,201,0],
-                                    [802,102,-1],
+                                    [802,202,-50e9],
                                     [803,201,0],
                                     [804,101, 0]])
+
+        if case == 29:
+
+            ## Pressão
+            
+            self.pressure = np.array([[801,101,1],
+                                      [802,201,0],
+                                      [803,102,0],
+                                      [804,201,0],
+                                      [805,201,0]])
+
+            ## Deslocamento 
+            #Horizontal 
+
+            self.hdispl = np.array([[801,201,0],
+                                    [802,202,-1],
+                                    [803,202,-1],
+                                    [804,101,0],
+                                    [805,201,0]])
+
+            ## Deslocamento 
+            #Vertical 
+
+            self.vdispl = np.array([[801,101,0],
+                                    [802,202,-1],
+                                    [803,202,-1],
+                                    [804,201,0],
+                                    [805,201,0]])
 
 # Creating a Rock object with property fields ========================================
 class set_rock:
@@ -475,9 +493,9 @@ class set_boundary:
 
             bc = bc_sort(mesh,benchmark)
 
-            self.pressure = set_bc(bc.pflag,bc.pval)
-            self.hdispl = set_bc(bc.uflag,bc.uval)
-            self.vdispl = set_bc(bc.vflag,bc.vval)  
+            self.pressure = set_flag_val(bc.pflag,bc.pval)
+            self.hdispl = set_flag_val(bc.uflag,bc.uval)
+            self.vdispl = set_flag_val(bc.vflag,bc.vval)  
 
 class legacy_pressure_bc:
 
@@ -489,19 +507,19 @@ class legacy_pressure_bc:
         bc_val = benchmark.bc_val.pressure
 
         flag_array = np.zeros(nbe)
-        val_array = np.zeros(nbe)
+        bc_value = np.zeros(nbe)
 
         for flag, edge in flag_dict:
 
             flag_array[edge] = flag
-            val_array[edge] = bc_val[bc_val[:,0] == flag,1]
+            bc_value[edge] = bc_val[bc_val[:,0] == flag,1]
 
-        Neu_edges = np.where(flag_array > 200)[0]
-        Dir_edges = np.where(flag_array < 200)[0]
+        neu_edges = np.where(flag_array > 200)[0]
+        dir_edges = np.where(flag_array < 200)[0]
 
-        self.Neu_edges = Neu_edges
-        self.Dir_edges = Dir_edges
-        self.val_array = val_array
+        self.neu_edges = neu_edges
+        self.dir_edges = dir_edges
+        self.bc_value = bc_value
 
 class bc_sort:
 
@@ -553,11 +571,46 @@ class bc_sort:
         if np.isin(benchmark.case,unit_square_vertical):
             vval = np.where(vval == -1, edge_center[:,1], vval)
 
-        demirdzic98 = np.array([29])
-        if np.isin(benchmark.case,demirdzic98):
+        demirdzic88 = np.array([28])
+        if np.isin(benchmark.case,demirdzic88):
             G = benchmark.rock.young/(2*(1 + benchmark.rock.poisson))
-            T = 50e9
+            T = - 50e9
             vval = np.where(vval == -1, (T/G)*edge_center[:,0], vval)
+
+        demirdzic94 = np.array([29])
+        if np.isin(benchmark.case,demirdzic94):
+
+            a = 0.1
+            b = 0.5
+            fx = 1e5
+
+            nte = mesh.edges.all.shape[0]
+
+            r = edge_center[:,0]**2 + edge_center[:,1]**2
+            theta = np.arctan(edge_center[:,1]/edge_center[:,0])
+
+            c1 = a**2/r
+            c2 = 1.5*(c1**2)
+
+            sigmaxx = fx*(1-c1*(1.5*np.cos(2*theta)+np.cos(4*theta))+c2*np.cos(4*theta))
+            sigmayy = fx*(-c1*(0.5*np.cos(2*theta)-np.cos(4*theta))-c2*np.cos(4*theta))
+            sigmaxy = fx*(-c1*(0.5*np.sin(2*theta)+np.sin(4*theta))+c2*np.sin(4*theta))
+
+            normals = mesh.edges.normal[:][mesh.edges.boundary]
+
+            tx = sigmaxx*normals[:,0] + sigmaxy*normals[:,1]
+            ty = sigmaxy*normals[:,0] + sigmayy*normals[:,1]
+
+            uval = np.where(uval == -1, tx, uval)
+            vval = np.where(vval == -1, ty, vval)
+
+            print('lmao')
+
+
+
+
+
+
 
         self.pflag = pflag
         self.pval = pval
@@ -568,16 +621,16 @@ class bc_sort:
         self.vflag = vflag
         self.vval = vval
 
-class set_bc:
+class set_flag_val:
 
-    def __init__(self,flag_array,val_array):
+    def __init__(self,flag_array,bc_value):
 
-        Neu_edges = np.where(flag_array > 200)[0]
-        Dir_edges = np.where(flag_array < 200)[0] 
+        neu_edges = np.where(flag_array > 200)[0]
+        dir_edges = np.where(flag_array < 200)[0] 
 
-        self.Neu_edges = Neu_edges
-        self.Dir_edges = Dir_edges
-        self.val_array = val_array
+        self.neu_edges = neu_edges
+        self.dir_edges = dir_edges
+        self.bc_value = bc_value
 
 # Initializing Solution ===============================================================
 class set_solution:
@@ -610,11 +663,11 @@ class set_solution:
             self.displacement.field_exact[:,1] = center[:,1]
 
 
-        demirdzic98 = np.array([29])
-        if np.isin(benchmark.case,demirdzic98):
+        demirdzic88 = np.array([28])
+        if np.isin(benchmark.case,demirdzic88):
 
             G = benchmark.rock.young/(2*(1 + benchmark.rock.poisson))
-            T = 50e9
+            T = -50e9
 
             self.displacement.field_exact[:,1] = (T/G)*center[:,0]
 
@@ -659,11 +712,11 @@ class set_solution:
         plt.clf() 
             
 
-        plot_y_num = np.sort(sol_num[elem_list])
+        plot_y_num = np.flip(np.sort(sol_num[elem_list]))
         plot_x = np.sort(center[:,axis][elem_list])
 
-        plot_y_exact = np.sort(sol_exact[elem_list])
-        plot_y_error = np.sort(sol_error[elem_list])
+        plot_y_exact = np.flip(np.sort(sol_exact[elem_list]))
+        plot_y_error = np.flip(np.sort(sol_error[elem_list]))
 
         plt.plot(plot_x,
                  plot_y_num, 
