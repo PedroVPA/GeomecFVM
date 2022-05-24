@@ -27,21 +27,35 @@
 #   sparse: False
 #   level: 1
  
-pressurevar:
+pressure_cell:
   type: faces
   data size: 1
   data type: float
   sparse: True
   level: 0
-    
-displacementu:
+
+displacement_cell:
+ type: faces
+ data size: 2
+ data type: float
+ sparse: True
+ level: 0
+ 
+sigmaxx:
  type: faces
  data size: 1
  data type: float
  sparse: True
  level: 0
- 
-displacementv:
+  
+sigmaxy:
+ type: faces
+ data size: 1
+ data type: float
+ sparse: True
+ level: 0
+  
+sigmayy:
  type: faces
  data size: 1
  data type: float

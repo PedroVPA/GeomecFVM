@@ -1,5 +1,3 @@
-from cProfile import label
-from turtle import color
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -23,7 +21,7 @@ class bench_rock:
         group_1 = np.array([11,21,22,23,24,25,26,27]) # homogeneo, sem acoplamento
         group_2 = np.array([12]) # heterogeneo, sem acoplamento
         group_3 = np.array([28]) # propriedades tiradas do exemplo 1 de Demirdzic,Martinovic & Ivankovic (1988)
-        group_4 = np.array([29]) # propriedades tiradas do exemplo 1 de Demirdzic,Muzaferija (1994)
+        group_4 = np.array([29]) # propriedades tiradas do exemplo 3 de Fillipini et al 2008
 
 
         if np.isin(case,group_1):
@@ -34,7 +32,7 @@ class bench_rock:
             self.porosity = np.zeros(1)
 
             self.young = np.ones(1)
-            self.poisson = np.zeros(1)
+            self.poisson = np.array([0.33])
 
             self.perm = np.zeros([1,2,2])
             self.perm[:] = np.eye(2) 
@@ -75,7 +73,7 @@ class bench_rock:
 
             self.porosity = np.zeros(1)
 
-            self.young = np.array([1e7])
+            self.young = np.array([3e7])
             self.poisson = np.array([0.3])
 
             self.perm = self.perm = np.zeros([1,2,2])
@@ -184,7 +182,7 @@ class bc_val:
             #Horizontal
 
             self.hdispl = np.array([[801,101,-1],
-                                    [802,201,1],
+                                    [802,101,1],
                                     [803,101,-1],
                                     [804,102,0]])
                     
@@ -192,7 +190,7 @@ class bc_val:
             #Vertical
              
             self.vdispl = np.array([[801,101,0],
-                                    [802,101,0],
+                                    [802,201,0],
                                     [803,101,0],
                                     [804,101,0]])
 
@@ -259,7 +257,7 @@ class bc_val:
             #Horizontal
 
             self.hdispl = np.array([[801,201,0],
-                                    [802,202,1],
+                                    [802,102,1],
                                     [803,201,0],
                                     [804,101,0]])
                     
@@ -267,9 +265,9 @@ class bc_val:
             #Vertical
              
             self.vdispl = np.array([[801,201,0],
-                                    [802,101,0],
+                                    [802,201,0],
                                     [803,201,0],
-                                    [804,101,0]])
+                                    [804,201,0]])
 
         if case == 26:
 
@@ -360,17 +358,17 @@ class bc_val:
             #Horizontal 
 
             self.hdispl = np.array([[801,201,0],
-                                    [802,202,-1],
-                                    [803,202,-1],
-                                    [804,101,0],
+                                    [802,201,0],
+                                    [803,201,0],
+                                    [804,201,0],
                                     [805,201,0]])
 
             ## Deslocamento 
             #Vertical 
 
             self.vdispl = np.array([[801,101,0],
-                                    [802,202,-1],
-                                    [803,202,-1],
+                                    [802,201,0],
+                                    [803,202,5e3],
                                     [804,201,0],
                                     [805,201,0]])
 
@@ -465,20 +463,21 @@ class set_fluid:
 # Creating Wells ======================================================================
 class set_well:
 
-    def __init__(self,mesh,benchmark):
+    def __init__(self,mesh,strategy):
 
         center = mesh.faces.center[:]
         nel = center.shape[0]
 
-        case = benchmark.case
+        bottom_lef = center.min(axis=0)
+        upper_right = center.max(axis=0)
 
-        if case == 13:
+        testx = (center[:,0] == bottom_lef[0]).astype(int)
+        testy = (center[:,1] == bottom_lef[1]).astype(int)
 
+        elem_1 = np.where((testx + testy) > 1)[0]
+
+        if strategy == 0:
             pass
-
-        else:
-
-            self.array = None
 
 # Setting bc on edges =================================================================
 class set_boundary:
@@ -580,8 +579,8 @@ class bc_sort:
         demirdzic94 = np.array([29])
         if np.isin(benchmark.case,demirdzic94):
 
-            a = 0.1
-            b = 0.5
+            a = 0.5
+            b = 2
             fx = 1e5
 
             nte = mesh.edges.all.shape[0]
@@ -671,14 +670,38 @@ class set_solution:
 
             self.displacement.field_exact[:,1] = (T/G)*center[:,0]
 
+        demirdzic94 = np.array([29])
+        if np.isin(benchmark.case,demirdzic94):
+
+            a = 0.5
+            b = 2
+            fx = 1e5
+
+            r = center[:,0]**2 + center[:,1]**2
+            theta = np.arctan(center[:,1]/center[:,0])
+
+            c1 = a**2/r
+            c2 = 1.5*(c1**2)
+
+            sigmaxx = fx*(1-c1*(1.5*np.cos(2*theta)+np.cos(4*theta))+c2*np.cos(4*theta))
+            sigmayy = fx*(-c1*(0.5*np.cos(2*theta)-np.cos(4*theta))-c2*np.cos(4*theta))
+            sigmaxy = fx*(-c1*(0.5*np.sin(2*theta)+np.sin(4*theta))+c2*np.sin(4*theta))
+
+            self.displacement.sigmaxx = sigmaxx
+            self.displacement.sigmaxy = sigmaxy
+            self.displacement.sigmayy = sigmayy
+
+
     def export(self,mesh,benchmark):
 
         case = str(benchmark.case)
         malha = benchmark.malha.replace('mesh/','').replace('.msh',' case-') + case
        
-        mesh.pressurevar[:] = self.pressure.field_num[:]
-        mesh.displacementu[:] = self.displacement.field_num[:,0]
-        mesh.displacementv[:] = self.displacement.field_num[:,1]
+        mesh.pressure_cell[:] = self.pressure.field_num[:]
+        mesh.displacement_cell[:] = self.displacement.field_num
+        """mesh.sigmaxx[:] = self.displacement.sigmaxx
+        mesh.sigmaxy[:] = self.displacement.sigmaxy
+        mesh.sigmayy[:] = self.displacement.sigmayy"""
         mesh.core.print(file = malha, extension = ".vtk")
 
     def error(self):
@@ -778,4 +801,8 @@ class displacement_sol:
 
         # Solução analítica 
         self.field_exact = np.zeros([nel,2])
+
+        self.sigmaxx = np.zeros([nel,1])
+        self.sigmaxy = np.zeros([nel,1])
+        self.sigamyy = np.zeros([nel,1])
 

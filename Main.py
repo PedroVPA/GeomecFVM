@@ -2,12 +2,13 @@
 # Monofásico
 # 'Fixed-Strain'
 
+from MPFAH import MPFAH_force
 import numpy as np
 import time
 
 from preprocessor.meshHandle.finescaleMesh import FineScaleMesh as impress
 from benchmark_init import set_benchmark,set_rock,set_fluid, set_well,set_boundary, set_solution
-from nlfv_param import set_nlfv
+from nlfv_param import set_nlfv_misc,set_nlfv_flux, set_nlfv_stress
 from lfv_hp import MPFAH, MPSAH
 
 run_start = time.time()
@@ -55,7 +56,7 @@ obs: caso o MOAB(Impress) retorne 'No such file in directory' é porque não tem
 '''
 start = time.time()
 
-malha = 'mesh/mec 1x1 right-tri.msh'
+malha = 'mesh/mec 2x2 quad.msh'
 mesh  = impress(mesh_file = malha, dim = 2)
 
 print(f"\nMesh generated successfuly! Only took {time.time()- start} seconds!")
@@ -85,14 +86,14 @@ print('\n********************       SETING CASE         *******************\n')
     2. demiredzic et al 1998, totalmente dirichlet
     2. demiredzic et al 1998, com Fy = 5e9 N e u = 0 em x = 1, resto dirichlet
     2.8 exemplo 1 de demiredzic et al 1998
-    2.9 1/4 de placa com furo
+    2.9 placa com furo sobre carregamento 
 ------------------------------------------------------------------------
 '''
 prep_time = time.time()
 start = time.time()
 
 # case = 1.1 sem o ponto
-case = 23
+case = 25
 benchmark = set_benchmark(case,malha)
 
 print(f"Benchmark set successfuly! Only took {time.time()- start} seconds!")
@@ -141,7 +142,9 @@ print('\n********************   NLFV PREPROCESSOR      *******************\n')
 # Preprocesso dos VF do prof Fernando
 start = time.time()
 
-nlfv = set_nlfv(mesh,rocks,benchmark)
+misc_par = set_nlfv_misc(mesh)
+flux_par = set_nlfv_flux(mesh,rocks.perm,misc_par)
+stress_par = set_nlfv_stress(mesh,rocks.elastic,misc_par)
 
 print(f'NLFV parameters generated successfuly! Only took {time.time() - start} seconds!')
 
@@ -152,7 +155,7 @@ print('\n*********************   CONTINUITY-SOLVER   *********************\n')
 # Discretização do termo do fluxo de darcy usando o MPFA-H
 start = time.time()
 
-flux_discr = MPFAH(mesh,fluids,wells,bc_val,nlfv)
+flux_discr = MPFAH(mesh,fluids,wells,bc_val,misc_par,flux_par)
 
 print(f'Flux discretization done successfuly! Only took {time.time() - start} seconds!')
 
@@ -165,7 +168,7 @@ print('\n*********************   MOMENTUM-SOLVER   *********************\n')
 # Discretização do termo de tensao efetiva usando o MPFA-H
 start = time.time()
 
-stress_discr = MPSAH(mesh,rocks,bc_val,nlfv)
+stress_discr = MPSAH(mesh,rocks,bc_val,misc_par,stress_par)
 
 print(f'Stress discretization done successfuly! Only took {time.time() - start} seconds!')
 
