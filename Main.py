@@ -7,7 +7,8 @@ import numpy as np
 import time
 
 from preprocessor.meshHandle.finescaleMesh import FineScaleMesh as impress
-from benchmark_init import set_benchmark,set_rock,set_fluid, set_well,set_boundary, set_solution
+from benchmark_init import set_benchmark
+from problem_properties import set_rock,set_fluid, set_well,set_boundary, set_solution
 from nlfv_param import set_nlfv_misc,set_nlfv_flux, set_nlfv_stress
 from lfv_hp import MPFAH, MPSAH
 
@@ -56,7 +57,7 @@ obs: caso o MOAB(Impress) retorne 'No such file in directory' é porque não tem
 '''
 start = time.time()
 
-malha = 'mesh/mec 2x2 quad.msh'
+malha = 'mesh/filipini2008_half_plate 11x31_61hole quad.msh'
 mesh  = impress(mesh_file = malha, dim = 2)
 
 print(f"\nMesh generated successfuly! Only took {time.time()- start} seconds!")
@@ -72,7 +73,7 @@ print('\n********************       SETING CASE         *******************\n')
 
     # Implementações pendentes (Danilo)
     1.2 Exemplo 1.1 do item 4.4.4 da Tese de Darlan
-    1.3 Sheng & Yuan 2016
+    1.3 homogêneo com poços
     
     1.4 Buckley-Leverett com poços
 
@@ -93,7 +94,7 @@ prep_time = time.time()
 start = time.time()
 
 # case = 1.1 sem o ponto
-case = 25
+case = 29
 benchmark = set_benchmark(case,malha)
 
 print(f"Benchmark set successfuly! Only took {time.time()- start} seconds!")
@@ -143,7 +144,7 @@ print('\n********************   NLFV PREPROCESSOR      *******************\n')
 start = time.time()
 
 misc_par = set_nlfv_misc(mesh)
-flux_par = set_nlfv_flux(mesh,rocks.perm,misc_par)
+#flux_par = set_nlfv_flux(mesh,rocks.perm,misc_par)
 stress_par = set_nlfv_stress(mesh,rocks.elastic,misc_par)
 
 print(f'NLFV parameters generated successfuly! Only took {time.time() - start} seconds!')
@@ -155,11 +156,11 @@ print('\n*********************   CONTINUITY-SOLVER   *********************\n')
 # Discretização do termo do fluxo de darcy usando o MPFA-H
 start = time.time()
 
-flux_discr = MPFAH(mesh,fluids,wells,bc_val,misc_par,flux_par)
+#flux_discr = MPFAH(mesh,fluids,wells,bc_val,misc_par,flux_par)
 
 print(f'Flux discretization done successfuly! Only took {time.time() - start} seconds!')
 
-flux_discr.steady_solver(sol)
+#flux_discr.steady_solver(sol)
 
 #-----------------------------------------------------------------------------
 print('\n*********************   MOMENTUM-SOLVER   *********************\n')
