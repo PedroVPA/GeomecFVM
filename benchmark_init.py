@@ -33,7 +33,8 @@ class benchmark_rock:
             self.porosity = np.zeros(1)
 
             self.young = np.ones(1)
-            self.poisson = np.array([0.33])
+            #self.poisson = np.array([0.33])
+            self.poisson = np.zeros(1)
 
             self.perm = np.zeros([1,2,2])
             self.perm[:] = np.eye(2) 
@@ -292,7 +293,7 @@ class benchmark_bc:
             self.vdispl = np.array([[801,201,0],
                                     [802,201,0],
                                     [803,201,0],
-                                    [804,201,0]])
+                                    [804,101,0]])
 
         if case == 26:
 

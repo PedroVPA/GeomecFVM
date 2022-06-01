@@ -2,7 +2,6 @@
 # Monofásico
 # 'Fixed-Strain'
 
-from MPFAH import MPFAH_force
 import numpy as np
 import time
 
@@ -57,7 +56,7 @@ obs: caso o MOAB(Impress) retorne 'No such file in directory' é porque não tem
 '''
 start = time.time()
 
-malha = 'mesh/filipini2008_half_plate 11x31_61hole quad.msh'
+malha = 'mesh/mec 128x128 right-tri.msh'
 mesh  = impress(mesh_file = malha, dim = 2)
 
 print(f"\nMesh generated successfuly! Only took {time.time()- start} seconds!")
@@ -70,11 +69,8 @@ print('\n********************       SETING CASE         *******************\n')
 1. Benchmark com apenas fluxo
 
     1.1 benchmark homogeneo, permeabilidade = identidade
-
-    # Implementações pendentes (Danilo)
     1.2 Exemplo 1.1 do item 4.4.4 da Tese de Darlan
-    1.3 homogêneo com poços
-    
+    1.3 homogêneo com poçosx
     1.4 Buckley-Leverett com poços
 
 2. Benchmark com apenas deformação
@@ -94,7 +90,7 @@ prep_time = time.time()
 start = time.time()
 
 # case = 1.1 sem o ponto
-case = 29
+case = 13
 benchmark = set_benchmark(case,malha)
 
 print(f"Benchmark set successfuly! Only took {time.time()- start} seconds!")
@@ -144,8 +140,8 @@ print('\n********************   NLFV PREPROCESSOR      *******************\n')
 start = time.time()
 
 misc_par = set_nlfv_misc(mesh)
-#flux_par = set_nlfv_flux(mesh,rocks.perm,misc_par)
-stress_par = set_nlfv_stress(mesh,rocks.elastic,misc_par)
+flux_par = set_nlfv_flux(mesh,rocks.perm,misc_par)
+#stress_par = set_nlfv_stress(mesh,rocks.elastic,misc_par)
 
 print(f'NLFV parameters generated successfuly! Only took {time.time() - start} seconds!')
 
@@ -156,11 +152,11 @@ print('\n*********************   CONTINUITY-SOLVER   *********************\n')
 # Discretização do termo do fluxo de darcy usando o MPFA-H
 start = time.time()
 
-#flux_discr = MPFAH(mesh,fluids,wells,bc_val,misc_par,flux_par)
+flux_discr = MPFAH(mesh,fluids,wells,bc_val,misc_par,flux_par)
 
 print(f'Flux discretization done successfuly! Only took {time.time() - start} seconds!')
 
-#flux_discr.steady_solver(sol)
+flux_discr.steady_solver(sol)
 
 #-----------------------------------------------------------------------------
 print('\n*********************   MOMENTUM-SOLVER   *********************\n')
@@ -169,11 +165,11 @@ print('\n*********************   MOMENTUM-SOLVER   *********************\n')
 # Discretização do termo de tensao efetiva usando o MPFA-H
 start = time.time()
 
-stress_discr = MPSAH(mesh,rocks,bc_val,misc_par,stress_par)
+#stress_discr = MPSAH(mesh,rocks,bc_val,misc_par,stress_par)
 
 print(f'Stress discretization done successfuly! Only took {time.time() - start} seconds!')
 
-stress_discr.steady_solver(sol)
+#stress_discr.steady_solver(sol)
 
 sol.error()
 
