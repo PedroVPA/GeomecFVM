@@ -1,31 +1,28 @@
+from tracemalloc import start
 import numpy as np
+import time
 
+val = np.arange(10000000)
 
-            check_ex = np.zeros([sort_elem.shape[0],ecenter.shape[0]])
-            check_ey = np.zeros([sort_elem.shape[0],ecenter.shape[0]])
+start = time.time()
 
-            check_ex[::-1,:] = ecenter[:,0] 
-            check_ey[::-1,:] = ecenter[:,1]
+list1 = []
+list1.extend(val)
 
-            check_c1x = np.zeros([sort_elem.shape[0],ecenter.shape[0]])
-            check_c1y = np.zeros([sort_elem.shape[0],ecenter.shape[0]])
+print(f"t1 = {time.time() - start}")
 
-            check_c1x[:,::-1] = auxcoord1[:,0,np.newaxis]
-            check_c1y[:,::-1] = auxcoord1[:,1,np.newaxis]
+start = time.time()
 
-            check1 = (check_c1x == check_ex).astype(int)
-            check2 = (check_c1y == check_ey).astype(int)
+array = np.array([])
+shape1 = array.shape[0]
+shape2 = val.shape[0]
+array_new = np.zeros(shape1 + shape2)
+id1 = np.arange(shape1)
+id2 = np.arange(shape2) + shape1
+array_new[id1] = array
+array_new[id2] = val
+array = array_new.astype('int')
 
-            check = (check1 + check2) > 1
-            
-            edge_order1[:,0] = np.where(check > 0)[1]
+print(f"t2 = {time.time() - start}")
 
-
-
-
-
-
-
-
-
-
+print('lmao')

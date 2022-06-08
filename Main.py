@@ -10,6 +10,7 @@ from benchmark_init import set_benchmark
 from problem_properties import set_rock,set_fluid, set_well,set_boundary, set_solution
 from nlfv_param import set_nlfv_misc,set_nlfv_flux, set_nlfv_stress
 from lfv_hp import MPFAH, MPSAH
+from geomec_coupling import pressure_grad#, fixed_strain
 
 run_start = time.time()
 print('Run Time Started!')
@@ -56,7 +57,7 @@ obs: caso o MOAB(Impress) retorne 'No such file in directory' é porque não tem
 '''
 start = time.time()
 
-malha = 'mesh/mec 128x128 right-tri.msh'
+malha = 'mesh/mec 2x2 quad.msh'
 mesh  = impress(mesh_file = malha, dim = 2)
 
 print(f"\nMesh generated successfuly! Only took {time.time()- start} seconds!")
@@ -70,7 +71,7 @@ print('\n********************       SETING CASE         *******************\n')
 
     1.1 benchmark homogeneo, permeabilidade = identidade
     1.2 Exemplo 1.1 do item 4.4.4 da Tese de Darlan
-    1.3 homogêneo com poçosx
+    1.3 homogêneo com poços
     1.4 Buckley-Leverett com poços
 
 2. Benchmark com apenas deformação
@@ -90,7 +91,7 @@ prep_time = time.time()
 start = time.time()
 
 # case = 1.1 sem o ponto
-case = 13
+case = 25
 benchmark = set_benchmark(case,malha)
 
 print(f"Benchmark set successfuly! Only took {time.time()- start} seconds!")
@@ -141,7 +142,7 @@ start = time.time()
 
 misc_par = set_nlfv_misc(mesh)
 flux_par = set_nlfv_flux(mesh,rocks.perm,misc_par)
-#stress_par = set_nlfv_stress(mesh,rocks.elastic,misc_par)
+stress_par = set_nlfv_stress(mesh,rocks.elastic,misc_par)
 
 print(f'NLFV parameters generated successfuly! Only took {time.time() - start} seconds!')
 
@@ -165,11 +166,13 @@ print('\n*********************   MOMENTUM-SOLVER   *********************\n')
 # Discretização do termo de tensao efetiva usando o MPFA-H
 start = time.time()
 
-#stress_discr = MPSAH(mesh,rocks,bc_val,misc_par,stress_par)
+stress_discr = MPSAH(mesh,rocks,bc_val,misc_par,stress_par)
 
 print(f'Stress discretization done successfuly! Only took {time.time() - start} seconds!')
 
-#stress_discr.steady_solver(sol)
+stress_discr.steady_solver(sol)
+
+grad_discr = pressure_grad(mesh,misc_par,flux_par)
 
 sol.error()
 
