@@ -3,7 +3,7 @@ import time
 
 class set_nlfv_misc:
 
-    def __init__(self,mesh):
+    def __init__(self,mesh) -> None:
 
         self.edge_size(mesh)
         self.interface(mesh)
@@ -247,7 +247,7 @@ class set_nlfv_misc:
 
 class set_nlfv_flux:
 
-    def __init__(self,mesh,tensor,misc):
+    def __init__(self,mesh,tensor,misc) -> None:
 
         misc.conormal(mesh, tensor)
 
@@ -338,7 +338,7 @@ class set_nlfv_flux:
 
 class set_nlfv_stress:
 
-    def __init__(self,mesh,tensors,misc):
+    def __init__(self,mesh,tensors,misc) -> None:
         
         misc.conormal(mesh, tensors.xx)
         Cxx_nij = misc.co_normal
@@ -523,7 +523,7 @@ class set_nlfv_stress:
 
 class mec_conormal:
 
-    def __init__(self,Cxx_nij,Cxy_nij,Cyx_nij,Cyy_nij):
+    def __init__(self,Cxx_nij,Cxy_nij,Cyx_nij,Cyy_nij) -> None:
 
         self.xx = Cxx_nij
         self.xy = Cxy_nij
@@ -534,7 +534,7 @@ class mec_conormal:
 
 class mec_proj:
 
-     def __init__(self,Cxxn,Cxyn,Cyxn,Cyyn):
+     def __init__(self,Cxxn,Cxyn,Cyxn,Cyyn) -> None:
 
         self.xx = Cxxn
         self.xy = Cxyn
@@ -545,7 +545,7 @@ class mec_proj:
 
 class mec_trans:
 
-    def __init__(self,ksi_ph_xx,ksi_ph_xy,ksi_ph_yx,ksi_ph_yy):
+    def __init__(self,ksi_ph_xx,ksi_ph_xy,ksi_ph_yx,ksi_ph_yy) -> None:
 
         self.xx = ksi_ph_xx.trans
         self.xy = ksi_ph_xy.trans
@@ -554,7 +554,7 @@ class mec_trans:
 
 class mec_aux_point:
 
-    def __init__(self,ksi_ph_xx,ksi_ph_xy,ksi_ph_yx,ksi_ph_yy):
+    def __init__(self,ksi_ph_xx,ksi_ph_xy,ksi_ph_yx,ksi_ph_yy) -> None:
 
         self.xx = ksi_ph_xx.aux_point
         self.xy = ksi_ph_xy.aux_point
@@ -563,7 +563,7 @@ class mec_aux_point:
 
 class transmissibilities:
 
-    def __init__(self, mesh, misc, points, K_nij):
+    def __init__(self, mesh, misc, points, K_nij) -> None:
 
         nbe         = mesh.edges.boundary.shape[0]  
         nie         = mesh.edges.internal.shape[0]

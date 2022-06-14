@@ -3,7 +3,7 @@ import numpy as np
 # Setting a Benchmark ================================================================
 class set_benchmark:
 
-    def __init__(self,case,malha):
+    def __init__(self,case,malha) -> None:
 
         self.case = case
         self.malha = malha
@@ -17,7 +17,7 @@ class set_benchmark:
 # Rock properties
 class benchmark_rock:
 
-    def __init__(self,case):
+    def __init__(self,case) -> None:
         
         homogeneo = np.array([11,13,21,22,23,24,25,26,27]) # homogeneo, sem acoplamento
         tese_darlan = np.array([12]) # heterogeneo, sem acoplamento
@@ -84,7 +84,7 @@ class benchmark_rock:
 # Fluid properties
 class benchmark_fluid:
 
-    def __init__(self,case):
+    def __init__(self,case) -> None:
         
         
         monofasico = np.array([11,12,13,21,22,23,24,25,26,27,28,29]) # Monofásico com viscosidade 1
@@ -112,7 +112,7 @@ class benchmark_bc:
     
     '''
 
-    def __init__(self,case):
+    def __init__(self,case) -> None:
         
         self.pressure = None
         self.hdispl = None
@@ -400,7 +400,7 @@ class benchmark_bc:
 
 class benchmark_time:
 
-    def __init__(self,case):
+    def __init__(self,case) -> None:
         
 
         if case == 31:
@@ -410,7 +410,7 @@ class benchmark_time:
 
 class benchmark_wells:
 
-    def __init__(self,case):
+    def __init__(self,case) -> None:
 
         if case == 13:
 
@@ -424,4 +424,4 @@ class benchmark_wells:
         else:
 
             self.empty = True
-    
+        

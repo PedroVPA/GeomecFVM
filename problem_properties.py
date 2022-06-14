@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 # Creating a Rock object with property fields ========================================
 class set_rock:
 
-    def __init__(self,mesh,benchmark):
+    def __init__(self,mesh,benchmark) -> None:
 
         center = mesh.faces.center[:]
         flag_dict = mesh.faces.flag.items()
@@ -32,7 +32,7 @@ class set_rock:
 
 class elastic_tensors:
 
-    def __init__(self,mesh,benchmark,flag_array):
+    def __init__(self,mesh,benchmark,flag_array) -> None:
         
         center = mesh.faces.center[:]
         nel = center.shape[0]
@@ -70,7 +70,7 @@ class elastic_tensors:
 # Creating a Fluid object with property fields =======================================
 class set_fluid:
 
-    def __init__(self,mesh,benchmark):
+    def __init__(self,mesh,benchmark) -> None:
 
         ''' Apenas Monofasico por equanto '''
 
@@ -92,7 +92,7 @@ class set_fluid:
 # Creating Wells ======================================================================
 class set_well:
 
-    def __init__(self,mesh,benchmark):
+    def __init__(self,mesh,benchmark) -> None:
 
         if benchmark.wells.empty:
 
@@ -141,14 +141,14 @@ class set_well:
 
 class pressure_wells:
 
-    def __init__(self,elems,pressure,p_wells):
+    def __init__(self,elems,pressure,p_wells) -> None:
         
         self.elems = elems[p_wells]
         self.value = pressure[p_wells] 
 
 class rate_wells:
 
-    def __init__(self,elems,rate,r_wells):
+    def __init__(self,elems,rate,r_wells) -> None:
         
         self.elems = elems[r_wells]
         self.value = rate[r_wells] 
@@ -156,7 +156,7 @@ class rate_wells:
 # Setting bc on edges =================================================================
 class set_boundary:
 
-    def __init__(self,mesh,benchmark):
+    def __init__(self,mesh,benchmark) -> None:
 
         if benchmark.bc_val.hdispl is None:
 
@@ -172,7 +172,7 @@ class set_boundary:
 
 class legacy_pressure_bc:
 
-    def __init__(self,mesh,benchmark):
+    def __init__(self,mesh,benchmark) -> None:
 
         nbe = mesh.edges.boundary.shape[0]
         flag_dict = mesh.edges.flag.items()
@@ -196,7 +196,7 @@ class legacy_pressure_bc:
 
 class bc_sort:
 
-    def __init__(self,mesh,benchmark):
+    def __init__(self,mesh,benchmark) -> None:
 
         nbe = mesh.edges.boundary.shape[0]
         flag_dict = mesh.edges.flag.items()
@@ -296,7 +296,7 @@ class bc_sort:
 
 class set_flag_val:
 
-    def __init__(self,flag_array,bc_value):
+    def __init__(self,flag_array,bc_value) -> None:
 
         neu_edges = np.where(flag_array > 200)[0]
         dir_edges = np.where(flag_array < 200)[0] 
@@ -308,7 +308,7 @@ class set_flag_val:
 # Initializing Solution ===============================================================
 class set_solution:
 
-    def __init__(self,mesh,benchmark):
+    def __init__(self,mesh,benchmark) -> None:
 
         pressure = pressure_sol(mesh)
 
@@ -449,10 +449,10 @@ class set_solution:
         plt.grid()
         plt.legend()
         plt.savefig(plotname +' displacemenet error at y = 0.05m.png')
-
+        
 class pressure_sol:
 
-    def __init__(self,mesh):
+    def __init__(self,mesh) -> None:
         
         center = mesh.faces.center[:]
         nel = center.shape[0]
@@ -465,7 +465,7 @@ class pressure_sol:
 
 class displacement_sol:
     
-    def __init__(self,mesh):
+    def __init__(self,mesh) -> None:
         
         center = mesh.faces.center[:]
         nel = center.shape[0]

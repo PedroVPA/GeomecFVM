@@ -158,6 +158,7 @@ flux_discr = MPFAH(mesh,fluids,wells,bc_val,misc_par,flux_par)
 print(f'Flux discretization done successfuly! Only took {time.time() - start} seconds!')
 
 flux_discr.steady_solver(sol)
+flux_discr.pressure_interp(mesh,bc_val,sol,misc_par,flux_par)
 
 #-----------------------------------------------------------------------------
 print('\n*********************   MOMENTUM-SOLVER   *********************\n')
@@ -167,12 +168,11 @@ print('\n*********************   MOMENTUM-SOLVER   *********************\n')
 start = time.time()
 
 stress_discr = MPSAH(mesh,rocks,bc_val,misc_par,stress_par)
+grad_discr = pressure_grad(mesh,misc_par)
 
 print(f'Stress discretization done successfuly! Only took {time.time() - start} seconds!')
 
 stress_discr.steady_solver(sol)
-
-grad_discr = pressure_grad(mesh,misc_par,flux_par)
 
 sol.error()
 

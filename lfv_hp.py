@@ -5,7 +5,7 @@ import time
 
 class MPFAH:
 
-    def __init__(self,mesh,fluids,wells,bc_val,misc_par,flux_par):
+    def __init__(self,mesh,fluids,wells,bc_val,misc_par,flux_par) -> None:
 
         nbe = mesh.edges.boundary.shape[0]
         nel = mesh.faces.center[:].shape[0]
@@ -44,6 +44,10 @@ class MPFAH:
         self.hpoints_interpolation(mesh,mobility,bc_val,misc_par,flux_par,flux)
 
         self.set_wells(mesh,wells)
+
+        self.matrix_assembly(nel)
+
+        del self.M_row, self.M_col, self.M_data, self.I_row, self.I_data
 
     def boundary_pressure(self,mesh,mobility,bc_val,misc_par,flux_par):
 
@@ -436,16 +440,11 @@ class MPFAH:
 
         nel = sol.pressure.field_num.shape[0]
 
-        self.matrix_assembly(nel)
-
         solution = spsolve(self.M,self.I)
 
         solution = np.where(np.abs(solution) < 1e-5, 0 , solution)
 
         sol.pressure.field_num = solution
-
-        del self.M
-        del self.I
 
     def pressure_interp(self,mesh,bc_val,sol,misc_par,flux_par):
 
@@ -538,12 +537,9 @@ class MPFAH:
 
         self.rate_cell = self.rate_edge[econnec].sum(axis = 1)
 
-    def keep_input(self,mesh,fluids,wells,bc_val,misc_par,flux_par):
-        pass
-
 class MPSAH:
 
-    def __init__(self,mesh,rock,bc_val,misc_par,stress_par):
+    def __init__(self,mesh,rock,bc_val,misc_par,stress_par) -> None:
 
         nbe = mesh.edges.boundary.shape[0]
         nel = mesh.faces.center[:].shape[0]
@@ -646,6 +642,10 @@ class MPSAH:
         hpoints = stress_par.aux_point.yy
 
         self.hpoints_interpolation(nbe,IsDir,Var,Var_aux,U_ij,hpoints,misc_par,stress_par,Fyy,xy)
+
+        self.matrix_assembly(nel)
+
+        del self.M_row, self.M_col, self.M_data,self.I_row, self.I_data
 
     def boundary_displacemenet(self,mesh,bc_val,stress_par):
 
@@ -1758,8 +1758,6 @@ class MPSAH:
 
         nel = sol.displacement.field_num.shape[0]
 
-        self.matrix_assembly(nel)
-
         solution = spsolve(self.M,self.I)
 
         solution = np.where(np.abs(solution) < 1e-5, 0 , solution)
@@ -1767,7 +1765,4 @@ class MPSAH:
         sol.displacement.field_num[:,0] = solution[::2]
         sol.displacement.field_num[:,1] = solution[1::2]
 
-        del self.M
-
-        pass
 
