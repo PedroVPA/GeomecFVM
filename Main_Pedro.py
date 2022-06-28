@@ -1,16 +1,28 @@
-# Geomecânica 2D
-# Monofásico
-# 'Fixed-Strain'
+"""
+UNIVERSIDADE FEDERAL DE PERNAMBUCO
+CENTRO DE TECNOLOGIA E GEOCIENCIAS
+PROGRAMA DE POS GRADUACAO EM ENGENHARIA MECÂNICA
+
+Discentes: Pedro Albuquerque
+           Danilo Maglhães
+           Ricardo Emanuel
+           Marcos Irandy
+           Letônio
+
+Docentes: Darlan Carvalho, Paulo Lyra.
+
+File Author: Main -> Pedro Albuquerque
+"""
 
 import numpy as np
 import time
 
 from preprocessor.meshHandle.finescaleMesh import FineScaleMesh as impress
 from benchmark_init import set_benchmark
-from problem_properties import set_rock,set_fluid, set_well,set_boundary, set_solution
+from global_propreties import set_rock,set_fluid, set_well,set_boundary, set_solution
 from nlfv_param import set_nlfv_misc,set_nlfv_flux, set_nlfv_stress
 from lfv_hp import MPFAH, MPSAH
-from geomec_coupling import pressure_grad#, fixed_strain
+from geomec_coupling import RCIN, PGHP, FSSPC
 
 run_start = time.time()
 print('Run Time Started!')
@@ -22,7 +34,9 @@ print('\n************************   MESH IMPORT   ************************\n')
 ------------------------- Opções de Malha --------------------------
 1. Malhas com apenas fluxo
 
-'mesh/homogeneo.msh' -> benchmark homogêneo 
+1.1 Quadrado Unitáro homogêneo
+
+'mesh/homogeneo.msh' -> 2x2 divisões, malha quadrada
 
 1.1 Malhas do paper Contreras, Lyra & Carvalho(2019)
 
@@ -35,29 +49,73 @@ print('\n************************   MESH IMPORT   ************************\n')
 
 -Sheng & Yuan(2016)/ Malha B/
 'mesh/ExampleRogerio_TriangMesh_10x10_Aligned.msh' -> 10x10 Divisões
-'mesh/ExampleRogerio_TriangMesh_10x10_Aligned.msh' -> 20x20 Divisões
-'mesh/ExampleRogerio_TriangMesh_10x10_Aligned.msh' -> 40x40 Divisões
-'mesh/ExampleRogerio_TriangMesh_10x10_Aligned.msh' -> 80x80 Divisões
-'mesh/ExampleRogerio_TriangMesh_10x10_Aligned.msh' -> 160x160 Divisões
+'mesh/ExampleRogerio_TriangMesh_20x20_Aligned.msh' -> 20x20 Divisões
+'mesh/ExampleRogerio_TriangMesh_40x40_Aligned.msh' -> 40x40 Divisões
+'mesh/ExampleRogerio_TriangMesh_80x80_Aligned.msh' -> 80x80 Divisões
+'mesh/ExampleRogerio_TriangMesh_160x160_Aligned.msh' -> 160x160 Divisões
 
+1.2 Malhas da Tese de Darlan
 
-2. Malhas para problemas geomecânicos
+- quad:
+'mesh/TeseDarlan serie 1x2 quad.msh'
+'mesh/TeseDarlan serie 2x2 quad.msh'
+'mesh/TeseDarlan serie 4x4 quad.msh'
+'mesh/TeseDarlan serie 8x8 quad.msh'
 
-'mec NxN elem' - Domínio quadrilateral unitário
+- tri:
+'mesh/TeseDarlan serie 1x2 right-tri.msh'
+'mesh/TeseDarlan serie 2x2 right-tri.msh'
+'mesh/TeseDarlan serie 4x4 right-tri.msh'
+'mesh/TeseDarlan serie 8x8 right-tri.msh'
+'mesh/TeseDarlan serie 16x16 right-tri.msh'
+
+2. Malhas para problemas mecânicos
+
+2.1 'mec NxN elem' - Domínio quadrilateral unitário
 N -> Número de divisões em x e y (1, 2, 4, 6, 8, 16, 32, 64, 128)
 elem -> Tipo de elemento ('quad' -> quadrado, 'right-ri' -> triangulo retangulo)
 
-ex:
-'mesh/mec 1x1 right-tri.msh'
+- quad:
+'mesh/mec 1x2 quad.msh'
 'mesh/mec 2x1 quad.msh'
+'mesh/mec 2x2 quad.msh'
+'mesh/mec 4x4 quad.msh'
+'mesh/mec 8x8 quad.msh'
+'mesh/mec 16x16 quad.msh'
+'mesh/mec 32x32 quad.msh'
+'mesh/mec 64x64 quad.msh'
+'mesh/mec 128x128 quad.msh'
 
-obs: caso o MOAB(Impress) retorne 'No such file in directory' é porque não tem mesmo.
+- tri:
+'mesh/mec 1x1 right-tri.msh'
+'mesh/mec 2x1 right-tri.msh'
+'mesh/mec 2x2 right-tri.msh'
+'mesh/mec 128x128 right-tri.msh'
+
+2.2 'demiredzic88 NxN elem' - Exemplo 1 de Demirdzic,Martinovic & Ivankovic (1988)
+
+- quad:
+'mesh/demiredzic88 1x2 quad.msh'
+'mesh/demiredzic88 1x20 quad.msh' -> Original do paper
+'mesh/demiredzic88 1x40 quad.msh'
+'mesh/demiredzic88 3x20 quad.msh'
+'mesh/demiredzic88 128x128 quad.msh'
+
+- tri:
+'mesh/demiredzic88 2x20 right-tri.msh'
+
+3. Malhar para problemas poromecânicos
+
+3.1 Terzaghi homogêneo - Exemplo 1 da tese Ribeiro (2016)
+
+- quad:
+'mesh/ribeiro2016 3x12 quad.msh'
 
 ------------------------------------------------------------------------
 '''
 start = time.time()
 
-malha = 'mesh/mec 2x2 quad.msh'
+malha = 'mesh/ribeiro2016 3x12 quad.msh'
 mesh  = impress(mesh_file = malha, dim = 2)
 
 print(f"\nMesh generated successfuly! Only took {time.time()- start} seconds!")
@@ -91,7 +149,7 @@ prep_time = time.time()
 start = time.time()
 
 # case = 1.1 sem o ponto
-case = 25
+case = 31
 benchmark = set_benchmark(case,malha)
 
 print(f"Benchmark set successfuly! Only took {time.time()- start} seconds!")
@@ -142,12 +200,14 @@ start = time.time()
 
 misc_par = set_nlfv_misc(mesh)
 flux_par = set_nlfv_flux(mesh,rocks.perm,misc_par)
+rc_par = set_nlfv_flux(mesh,rocks.elastic.G,misc_par)
 stress_par = set_nlfv_stress(mesh,rocks.elastic,misc_par)
+
 
 print(f'NLFV parameters generated successfuly! Only took {time.time() - start} seconds!')
 
 #-----------------------------------------------------------------------------
-print('\n*********************   CONTINUITY-SOLVER   *********************\n')
+print('\n*********************   CONTINUITY-DISCR    *********************\n')
 #-----------------------------------------------------------------------------
 
 # Discretização do termo do fluxo de darcy usando o MPFA-H
@@ -155,33 +215,56 @@ start = time.time()
 
 flux_discr = MPFAH(mesh,fluids,wells,bc_val,misc_par,flux_par)
 
-print(f'Flux discretization done successfuly! Only took {time.time() - start} seconds!')
+#flux_discr.steady_solver(sol)
+#flux_discr.pressure_interp(mesh,bc_val,sol,misc_par,flux_par)
 
-flux_discr.steady_solver(sol)
-flux_discr.pressure_interp(mesh,bc_val,sol,misc_par,flux_par)
+#print(f'Flux discretization done successfuly! Only took {time.time() - start} seconds!')
+
+rc_discr = MPFAH(mesh,fluids,wells,bc_val,misc_par,rc_par)
+coupling = RCIN() 
+
+print(f'Continuity Equation discretization done successfuly! Only took {time.time() - start} seconds!')
 
 #-----------------------------------------------------------------------------
-print('\n*********************   MOMENTUM-SOLVER   *********************\n')
+print('\n*********************    MOMENTUM-DISCR     *********************\n')
 #-----------------------------------------------------------------------------
 
 # Discretização do termo de tensao efetiva usando o MPFA-H
 start = time.time()
 
 stress_discr = MPSAH(mesh,rocks,bc_val,misc_par,stress_par)
-grad_discr = pressure_grad(mesh,misc_par)
-
-print(f'Stress discretization done successfuly! Only took {time.time() - start} seconds!')
 
 stress_discr.steady_solver(sol)
 
-sol.error()
+stress_discr.displ_interp(mesh,bc_val,sol.displacement.field_num,misc_par,stress_par)
 
-sol.export(mesh,benchmark)
+#print(f'Stress discretization done successfuly! Only took {time.time() - start} seconds!')
+
+grad_discr = PGHP(mesh,misc_par)
+
+print(f'Momentum Equation discretization done successfuly! Only took {time.time() - start} seconds!')
+
+#-----------------------------------------------------------------------------
+print('\n*********************     FIXED-STRAIN      *********************\n')
+#-----------------------------------------------------------------------------
+
+start = time.time()
+
+print('Simulation Start!')
+
+run = FSSPC(mesh,
+            benchmark,
+            rocks,
+            fluids,
+            sol,
+            bc_val,
+            misc_par,
+            flux_par,
+            stress_par,
+            flux_discr,
+            rc_discr,
+            stress_discr,
+            grad_discr,
+            coupling)
+
 print("fim")
-'''================= Pendentes===================== '''
-
-# Solver Mecânico e Acoplamento
-
-
-
-

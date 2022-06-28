@@ -1,3 +1,20 @@
+"""
+UNIVERSIDADE FEDERAL DE PERNAMBUCO
+CENTRO DE TECNOLOGIA E GEOCIENCIAS
+PROGRAMA DE POS GRADUACAO EM ENGENHARIA MECÂNICA
+
+Discentes: Pedro Albuquerque
+           Danilo Maglhães
+           Ricardo Emanuel
+           Marcos Irandy
+           Letônio
+
+Docentes: Darlan Carvalho, Paulo Lyra.
+
+File Author: Main -> Pedro Albuquerque
+             Co 1->
+"""
+
 import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse.linalg import spsolve
@@ -446,19 +463,15 @@ class MPFAH:
 
         sol.pressure.field_num = solution
 
-    def pressure_interp(self,mesh,bc_val,sol,misc_par,flux_par):
+    def pressure_interp(self,mesh,bc_val,p,misc_par,flux_par):
 
         nbe = mesh.edges.boundary.shape[0]
 
         IsDir = bc_val.pressure.dir_edges
         IsNeu = bc_val.pressure.neu_edges
 
-        p = sol.pressure.field_num
-
         interface = misc_par.interface_elems
         W_DMP = flux_par.W_DMP
-        hpoints = flux_par.aux_point
-        trans = flux_par.trans
 
         ipressure = (p[interface[nbe:]]*W_DMP).sum(axis = 1)
         bpressure = np.zeros(nbe)
@@ -483,9 +496,9 @@ class MPFAH:
             elems = interface[hp_aux[aux_InDom]]
             weights = W_DMP[hp_aux[aux_InDom] - nbe]
 
-            hp_value[aux_InDom] = (p[elems]*weights).sum(axis = 1)
+            hp_value[aux_InDom] = ipressure[hp_aux[aux_InDom] - nbe]
 
-        bpressure[IsNeu] = M*p[interface[IsNeu,0]] - coeff*hp_value - F
+        bpressure[IsNeu] = M*p[interface[IsNeu,0]] - coeff*hp_value + F
 
         self.edge_pressure = np.zeros(nbe + ipressure.shape[0])
         self.edge_pressure[:nbe] = bpressure
@@ -1762,7 +1775,125 @@ class MPSAH:
 
         solution = np.where(np.abs(solution) < 1e-5, 0 , solution)
 
-        sol.displacement.field_num[:,0] = solution[::2]
-        sol.displacement.field_num[:,1] = solution[1::2]
+        sol.displacement.field_num = solution.reshape(nel,2)
+
+    def displ_interp(self,mesh,bc_val,U,misc_par,stress_par):
+
+        nbe = mesh.edges.boundary.shape[0]
+        nie = mesh.edges.internal.shape[0]
+
+        interface = misc_par.interface_elems
+
+        W_DMP = stress_par.W_DMP
+
+        u = U[:,0]
+        v = U[:,1]    
+
+        IsDirx = bc_val.hdispl.dir_edges
+        IsNeux = bc_val.hdispl.neu_edges
+        valuex = bc_val.hdispl.bc_value
+
+        IsDiry = bc_val.vdispl.dir_edges
+        IsNeuy = bc_val.vdispl.neu_edges
+        valuey = bc_val.vdispl.bc_value
+
+        idispl = np.zeros([nie,2])
+
+        idispl[:,0] = W_DMP[:,0,0,0]*u[interface[nbe:,0]] +  W_DMP[:,1,0,0]*u[interface[nbe:,1]] + W_DMP[:,0,0,1]*v[interface[nbe:,0]] +  W_DMP[:,1,0,1]*v[interface[nbe:,1]]
+        
+        idispl[:,1] = (W_DMP[:,0,1,0]*u[interface[nbe:,0]] +  W_DMP[:,1,1,0]*u[interface[nbe:,1]] 
+        + W_DMP[:,0,1,1]*v[interface[nbe:,0]] +  W_DMP[:,1,1,1]*v[interface[nbe:,1]])
+
+        bdispl = np.zeros([nbe,2])
+
+        bdispl[IsDirx,0] = valuex[IsDirx]
+        bdispl[IsDiry,1] = valuey[IsDiry]
+
+        if IsNeux.shape[0] > 0:
+
+            M = self.u_ij[IsNeux,0]
+            coeff = self.u_ij[IsNeux,1]
+            hp_aux = self.u_ij[IsNeux,2].astype(int)
+            hp_value = np.zeros(hp_aux.shape)
+
+            aux_InDir = np.isin(hp_aux[:,0],IsDirx)
+            if aux_InDir.sum() > 0:
+
+                hp_value[aux_InDir,0] = valuex[hp_aux[aux_InDir,0]]
+
+            aux_InDom = hp_aux[:,0] >= nbe
+            if aux_InDom.sum() > 0:
+
+                hp_value[aux_InDom,0] = idispl[hp_aux[aux_InDom,0] - nbe,0]
+
+            aux_InDir = np.isin(hp_aux[:,1],IsDiry)
+            if aux_InDir.sum() > 0:
+
+                hp_value[aux_InDir,1] = valuey[hp_aux[aux_InDir,1]]
+
+            aux_InDom = hp_aux[:,1] >= nbe
+            if aux_InDom.sum() > 0:
+
+                hp_value[aux_InDom,1] = idispl[hp_aux[aux_InDom,1] - nbe,1]
+
+            aux_InDir = np.isin(hp_aux[:,2],IsDiry)
+            if aux_InDir.sum() > 0:
+
+                hp_value[aux_InDir,2] = valuey[hp_aux[aux_InDir,2]]
+
+            aux_InDom = hp_aux[:,2] >= nbe
+            if aux_InDom.sum() > 0:
+
+                hp_value[aux_InDom,2] = idispl[hp_aux[aux_InDom,2] - nbe,1]
+
+            bdispl[IsNeux,0] = (M[:,0]*u[interface[IsNeux,0]] + M[:,1]*v[interface[IsNeux,0]]
+            - (coeff*hp_value).sum(axis = 1) + M[:,2])
+
+        if IsNeuy.shape[0] > 0:
+
+            M = self.v_ij[IsNeuy,0]
+            coeff = self.v_ij[IsNeuy,1]
+            hp_aux = self.v_ij[IsNeuy,2].astype(int)
+            hp_value = np.zeros(hp_aux.shape)
+
+            aux_InDir = np.isin(hp_aux[:,0],IsDiry)
+            if aux_InDir.sum() > 0:
+
+                hp_value[aux_InDir,0] = valuey[hp_aux[aux_InDir,0]]
+
+            aux_InDom = hp_aux[:,0] >= nbe
+            if aux_InDom.sum() > 0:
+
+                hp_value[aux_InDom,0] = idispl[hp_aux[aux_InDom,0] - nbe,1]
+
+            aux_InDir = np.isin(hp_aux[:,1],IsDirx)
+            if aux_InDir.sum() > 0:
+
+                hp_value[aux_InDir,1] = valuex[hp_aux[aux_InDir,1]]
+
+            aux_InDom = hp_aux[:,1] >= nbe
+            if aux_InDom.sum() > 0:
+
+                hp_value[aux_InDom,1] = idispl[hp_aux[aux_InDom,1] - nbe,0]
+
+            aux_InDir = np.isin(hp_aux[:,2],IsDirx)
+            if aux_InDir.sum() > 0:
+
+                hp_value[aux_InDir,2] = valuex[hp_aux[aux_InDir,2]]
+
+            aux_InDom = hp_aux[:,2] >= nbe
+            if aux_InDom.sum() > 0:
+
+                hp_value[aux_InDom,2] = idispl[hp_aux[aux_InDom,2] - nbe,0]
+
+            bdispl[IsNeuy,1] = (M[:,0]*u[interface[IsNeuy,0]] + M[:,1]*v[interface[IsNeuy,0]]
+            - (coeff*hp_value).sum(axis = 1) + M[:,2])
+
+        self.edge_displ = np.zeros([nbe + nie,2])
+        self.edge_displ[:nbe] = bdispl
+        self.edge_displ[nbe:] = idispl
 
 
+
+
+        

@@ -1,3 +1,20 @@
+"""
+UNIVERSIDADE FEDERAL DE PERNAMBUCO
+CENTRO DE TECNOLOGIA E GEOCIENCIAS
+PROGRAMA DE POS GRADUACAO EM ENGENHARIA MECÂNICA
+
+Discentes: Pedro Albuquerque
+           Danilo Maglhães
+           Ricardo Emanuel
+           Marcos Irandy
+           Letônio
+
+Docentes: Darlan Carvalho, Paulo Lyra.
+
+File Author: Main -> Pedro Albuquerque
+             Co 1->
+"""
+
 import numpy as np  
 import time
 
@@ -632,7 +649,7 @@ class transmissibilities:
             ve2 = np.zeros(3)
             ve2[:2] = K_nij[ifacont + bedge*nbe]
 
-            if np.linalg.norm(ve2) < 1e-5:
+            if np.linalg.norm(ve2) < 1e-16:
 
                 # atribuindo valores a os coeficientes
                 self.trans[ifacont + bedge*nbe,row,0] = 0
@@ -682,9 +699,9 @@ class transmissibilities:
                 sgnquadrant2 = np.sign(auxquadrant2)
                 
                 test11 = sgnquadrant1 == sgnquadrant2        
-                test12 = np.abs(auxquadrant1) > 1e-10        
-                test13 = np.abs(auxquadrant2) > 1e-10
-                
+                test12 = np.abs(auxquadrant1) > 1e-16        
+                test13 = np.abs(auxquadrant2) > 1e-16
+                                
                 test21 = sgnquadrant1 == 0
                 test22 = sgnquadrant2  > 0
                 test23 = sgnquadrant1  > 0

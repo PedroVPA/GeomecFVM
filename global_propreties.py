@@ -1,3 +1,20 @@
+"""
+UNIVERSIDADE FEDERAL DE PERNAMBUCO
+CENTRO DE TECNOLOGIA E GEOCIENCIAS
+PROGRAMA DE POS GRADUACAO EM ENGENHARIA MECÂNICA
+
+Discentes: Pedro Albuquerque
+           Danilo Maglhães
+           Ricardo Emanuel
+           Marcos Irandy
+           Letônio
+
+Docentes: Darlan Carvalho, Paulo Lyra.
+
+File Author: Main -> Pedro Albuquerque
+             Co 1->
+"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -23,6 +40,8 @@ class set_rock:
         self.young = benchmark.rock.young[flag_array]
         self.poisson = benchmark.rock.poisson[flag_array]
 
+        self.biot = benchmark.rock.biot[flag_array]
+
         self.perm = benchmark.rock.perm[flag_array]
 
         self.elastic = elastic_tensors(mesh,benchmark,flag_array)
@@ -46,6 +65,7 @@ class elastic_tensors:
         self.xy = np.zeros([nel,2,2])
         self.yx = np.zeros([nel,2,2])
         self.yy = np.zeros([nel,2,2])
+        self.G = np.zeros([nel,2,2])
   
         self.xx[:,0,0] = (lame1 + 2*lame2)[flag_array]
         self.xx[:,0,1] = 0
@@ -66,6 +86,11 @@ class elastic_tensors:
         self.yy[:,0,1] = 0
         self.yy[:,1,0] = 0
         self.yy[:,1,1] = (lame1 + 2*lame2)[flag_array]
+
+        self.G[:,0,0] = lame2[flag_array]
+        self.G[:,0,1] = 0
+        self.G[:,1,0] = 0
+        self.G[:,1,1] = lame2[flag_array]
 
 # Creating a Fluid object with property fields =======================================
 class set_fluid:

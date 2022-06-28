@@ -1,3 +1,20 @@
+"""
+UNIVERSIDADE FEDERAL DE PERNAMBUCO
+CENTRO DE TECNOLOGIA E GEOCIENCIAS
+PROGRAMA DE POS GRADUACAO EM ENGENHARIA MECÂNICA
+
+Discentes: Pedro Albuquerque
+           Danilo Maglhães
+           Ricardo Emanuel
+           Marcos Irandy
+           Letônio
+
+Docentes: Darlan Carvalho, Paulo Lyra.
+
+File Author: Main -> Pedro Albuquerque
+             Co 1->
+"""
+
 import numpy as np
 
 # Setting a Benchmark ================================================================
@@ -23,7 +40,7 @@ class benchmark_rock:
         tese_darlan = np.array([12]) # heterogeneo, sem acoplamento
         demizdzic88 = np.array([28]) # propriedades tiradas do exemplo 1 de Demirdzic,Martinovic & Ivankovic (1988)
         fillipini08 = np.array([29]) # propriedades tiradas do exemplo 3 de Fillipini et al 2008
-
+        ribeiro2016 = np.array([31])
 
         if np.isin(case,homogeneo):
 
@@ -78,8 +95,23 @@ class benchmark_rock:
             self.young = np.array([3e7])
             self.poisson = np.array([0.3])
 
-            self.perm = self.perm = np.zeros([1,2,2])
+            self.perm = np.zeros([1,2,2])
             self.perm[:] = np.eye(2)
+
+        elif np.isin(case,ribeiro2016):
+
+            self.density = np.zeros(1)
+            self.compressibility = np.array([(25/9)*1e-11])
+
+            self.biot = np.array([7/9])
+
+            self.porosity = np.array([0.19])
+
+            self.young = np.array([14,4e9])
+            self.poisson = np.array([0.2])
+
+            self.perm = np.zeros([1,2,2])
+            self.perm[:] = 1.9e-15*np.eye(2)
 
 # Fluid properties
 class benchmark_fluid:
@@ -88,13 +120,21 @@ class benchmark_fluid:
         
         
         monofasico = np.array([11,12,13,21,22,23,24,25,26,27,28,29]) # Monofásico com viscosidade 1
+        ribeiro2016 = np.array([31])
+        bifasico = np.array([])
 
         if np.isin(case,monofasico):
             
             self.compressibility = 0
             self.density = 0
             self.viscosity = 1
-         
+
+        if np.isin(case,ribeiro2016):
+           
+            self.compressibility = (300/99)*1e-10
+            self.density = 0
+            self.viscosity = 0.001
+
 # Boundary conditions
 class benchmark_bc:
 
@@ -366,7 +406,7 @@ class benchmark_bc:
             #Vertical 
 
             self.vdispl = np.array([[801,201,0],
-                                    [802,202,-50e9],
+                                    [802,202,-5e10],
                                     [803,201,0],
                                     [804,101, 0]])
 
@@ -398,6 +438,31 @@ class benchmark_bc:
                                     [804,201,0],
                                     [805,201,0]])
 
+        if case == 31:
+
+            ## Pressão
+            
+            self.pressure = np.array([[801,201,0],
+                                      [802,201,0],
+                                      [803,101,0],
+                                      [804,201,0]])
+
+            ## Deslocamento 
+            #Horizontal 
+
+            self.hdispl = np.array([[801,201,0],
+                                    [802,101,0],
+                                    [803,201,0],
+                                    [804,101,0]])
+
+            ## Deslocamento 
+            #Vertical 
+
+            self.vdispl = np.array([[801,101,0],
+                                    [802,201,0],
+                                    [803,202,1e6],
+                                    [804,201,0]])
+
 class benchmark_time:
 
     def __init__(self,case) -> None:
@@ -405,7 +470,7 @@ class benchmark_time:
 
         if case == 31:
 
-            self.total = 1
+            self.total = 4000
             self.step = 0.1
 
 class benchmark_wells:
