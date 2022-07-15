@@ -15,6 +15,7 @@ File Author: Main -> Pedro Albuquerque
              Co 1->
 """
 
+from benchmark_init import benchmark_solution
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -40,7 +41,7 @@ class set_rock:
         self.young = benchmark.rock.young[flag_array]
         self.poisson = benchmark.rock.poisson[flag_array]
 
-        self.biot = benchmark.rock.biot[flag_array]
+        #self.biot = benchmark.rock.biot[flag_array]
 
         self.perm = benchmark.rock.perm[flag_array]
 
@@ -304,12 +305,6 @@ class bc_sort:
 
             print('lmao')
 
-
-
-
-
-
-
         self.pflag = pflag
         self.pval = pval
         
@@ -335,13 +330,9 @@ class set_solution:
 
     def __init__(self,mesh,benchmark) -> None:
 
-        pressure = pressure_sol(mesh)
+        self.pressure = pressure_sol(mesh,benchmark)
 
-        self.pressure = pressure
-
-        displacement = displacement_sol(mesh)
-
-        self.displacement = displacement
+        self.displacement = displacement_sol(mesh)
 
     def analytic(self,mesh,benchmark):
 
@@ -390,6 +381,12 @@ class set_solution:
             self.displacement.sigmaxy = sigmaxy
             self.displacement.sigmayy = sigmayy
 
+    def analytic_comp(self,mesh,benchmark, t = 0 ):
+
+        pressure = mesh.pressure_cell[:]
+        analytic = benchmark.solution.analytic
+
+        self.pressure.field_exact = analytic.pressure
 
     def export(self,mesh,benchmark):
 
@@ -477,16 +474,13 @@ class set_solution:
         
 class pressure_sol:
 
-    def __init__(self,mesh) -> None:
+    def __init__(self,mesh,benchmark) -> None:
         
-        center = mesh.faces.center[:]
-        nel = center.shape[0]
-
         # Solução Numérica
-        self.field_num = np.zeros([nel,1])
+        self.field_num = benchmark.solution.pressure_init*np.ones_like(mesh.pressure_cell[:])
 
-        # Solução analítica pra quando Danilo implementar o Sheng Yuan
-        self.field_exact = np.zeros([nel,1])
+        # Solução analítica
+        self.field_exact = np.zeros_like(mesh.pressure_cell[:])
 
 class displacement_sol:
     

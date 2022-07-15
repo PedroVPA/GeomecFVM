@@ -115,7 +115,7 @@ class PGHP:
 
         self.I = coo_matrix((self.data,(self.row,col)),shape=(2*nel,1)).tocsr()
 
-class RCIN:
+class rhie_chow:
 
     def __init__(self) -> None:
         pass
@@ -284,10 +284,7 @@ class FSSPC:
 
             simu_percent = sum_step*100/total_time
             
-            print_percent = range(0,100,10)
-            
-            if simu_percent in print_percent:
-                print(f'Simulation at {simu_percent}%')
+            print(f'Simulation at {simu_percent}%')
 
             time_level += 1
             sum_step += dt
@@ -356,7 +353,7 @@ class FSSPC:
                 p_error = (p_new - p_old).max()
                 u_error = (u_new - u_old).max()
 
-                erro = max([p_error,u_error])
+                error = max([p_error,u_error])
 
                 p_old = p_new
                 u_old = u_new
@@ -365,7 +362,6 @@ class FSSPC:
  
 
             print('lmao')
-
 
 class FSSPI:
 

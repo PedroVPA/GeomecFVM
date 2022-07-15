@@ -16,6 +16,7 @@ File Author: Main -> Pedro Albuquerque
 """
 
 import numpy as np
+from analytic_solutions import compressible_flow_1D
 
 # Setting a Benchmark ================================================================
 class set_benchmark:
@@ -29,6 +30,7 @@ class set_benchmark:
         self.bc_val = benchmark_bc(case)
         self.wells = benchmark_wells(case)
         self.time = benchmark_time(case)
+        self.solution = benchmark_solution(case)
         self.gravity = 9.81 # m/s²
 
 # Rock properties
@@ -36,10 +38,11 @@ class benchmark_rock:
 
     def __init__(self,case) -> None:
         
-        homogeneo = np.array([11,13,21,22,23,24,25,26,27]) # homogeneo, sem acoplamento
+        homogeneo = np.array([11,13,21,22,23,24,25,26]) # homogeneo, sem acoplamento
         tese_darlan = np.array([12]) # heterogeneo, sem acoplamento
         demizdzic88 = np.array([28]) # propriedades tiradas do exemplo 1 de Demirdzic,Martinovic & Ivankovic (1988)
         fillipini08 = np.array([29]) # propriedades tiradas do exemplo 3 de Fillipini et al 2008
+        xueli2012 = np.array([14])
         ribeiro2016 = np.array([31])
 
         if np.isin(case,homogeneo):
@@ -50,7 +53,7 @@ class benchmark_rock:
             self.porosity = np.zeros(1)
 
             self.young = np.ones(1)
-            #self.poisson = np.array([0.33])
+            #self.poisson = np.array([0.3])
             self.poisson = np.zeros(1)
 
             self.perm = np.zeros([1,2,2])
@@ -113,14 +116,28 @@ class benchmark_rock:
             self.perm = np.zeros([1,2,2])
             self.perm[:] = 1.9e-15*np.eye(2)
 
+        elif np.isin(case,xueli2012):
+
+            self.density = np.zeros(1)
+            self.compressibility = np.array([5e-4/6894.76])
+
+            self.porosity = np.array([0.2])
+
+            self.young = np.zeros(1)
+            self.poisson = np.zeros(1)
+
+            self.perm = np.zeros([1,2,2])
+            self.perm[:] = 500e-15*np.eye(2)
+
 # Fluid properties
 class benchmark_fluid:
 
     def __init__(self,case) -> None:
         
         
-        monofasico = np.array([11,12,13,21,22,23,24,25,26,27,28,29]) # Monofásico com viscosidade 1
+        monofasico = np.array([11,12,13,21,22,23,24,25,26,28,29]) # Monofásico com viscosidade 1
         ribeiro2016 = np.array([31])
+        xueli2012 = np.array([14])
         bifasico = np.array([])
 
         if np.isin(case,monofasico):
@@ -134,6 +151,12 @@ class benchmark_fluid:
             self.compressibility = (300/99)*1e-10
             self.density = 0
             self.viscosity = 0.001
+
+        if np.isin(case,xueli2012):
+            
+            self.compressibility = 1.04e-5/6894.76
+            self.density = 0
+            self.viscosity = 0.249e-3
 
 # Boundary conditions
 class benchmark_bc:
@@ -194,6 +217,30 @@ class benchmark_bc:
                                       [802,201,0],
                                       [803,201,0], 
                                       [804,201,0]]) 
+
+            ## Deslocamento 
+            #Horizontal 
+
+             self.hdispl = np.array([[801,101,0],
+                                     [802,101,0],
+                                     [803,101,0],
+                                     [804,101,0]])
+            ## Deslocamento 
+            #Vertical 
+
+             self.vdispl = np.array([[801,101,0],
+                                    [802,101,0],
+                                    [803,101,0],
+                                    [804,101,0]]) 
+
+        if case == 14:
+
+            ## Pressão
+        
+             self.pressure = np.array([[801,201,0],
+                                      [802,101,2000*6894.76],
+                                      [803,201,0], 
+                                      [804,102,1900*6894.76]]) 
 
             ## Deslocamento 
             #Horizontal 
@@ -357,33 +404,8 @@ class benchmark_bc:
              
             self.vdispl = np.array([[801,101,0],
                                     [802,201,0],
-                                    [803,202,1],
+                                    [803,202,0.5],
                                     [804,201,0]])
-
-        if case == 27:
-
-            ## Pressão
-            
-            self.pressure = np.array([[801,101,1],
-                                      [802,201,0],
-                                      [803,102,0],
-                                      [804,201,0]])
-
-            ## Deslocamento 
-            #Horizontal 
-
-            self.hdispl = np.array([[801,101,0],
-                                    [802,101,0],
-                                    [803,101,0],
-                                    [804,101,0]])
-
-            ## Deslocamento 
-            #Vertical 
-
-            self.vdispl = np.array([[801,101,-1],
-                                    [802,101,-1],
-                                    [803,101,-1],
-                                    [804,101,-1]])
 
         if case == 28:
 
@@ -470,8 +492,13 @@ class benchmark_time:
 
         if case == 31:
 
-            self.total = 4000
+            self.total = 400
             self.step = 0.1
+
+        if case == 14:
+
+            self.total = 20*86400
+            self.step = 1
 
 class benchmark_wells:
 
@@ -489,4 +516,14 @@ class benchmark_wells:
         else:
 
             self.empty = True
+
+class benchmark_solution:
+
+    def __init__(self,case) -> None:
         
+        if case == 14:
+        
+            self.pressure_init = 2000*6894.76
+            self.dipl_init = None
+
+            self.analytic = compressible_flow_1D()

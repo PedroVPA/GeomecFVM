@@ -22,7 +22,8 @@ from benchmark_init import set_benchmark
 from global_propreties import set_rock,set_fluid, set_well,set_boundary, set_solution
 from nlfv_param import set_nlfv_misc,set_nlfv_flux, set_nlfv_stress
 from lfv_hp import MPFAH, MPSAH
-from geomec_coupling import RCIN, PGHP, FSSPC
+from geomec_coupling import rhie_chow, PGHP, FSSPC
+from time_integral import implicit_euler
 
 run_start = time.time()
 print('Run Time Started!')
@@ -115,7 +116,7 @@ elem -> Tipo de elemento ('quad' -> quadrado, 'right-ri' -> triangulo retangulo)
 '''
 start = time.time()
 
-malha = 'mesh/ribeiro2016 3x12 quad.msh'
+malha = 'mesh/xueli2012cs3 100x1 quad.msh'
 mesh  = impress(mesh_file = malha, dim = 2)
 
 print(f"\nMesh generated successfuly! Only took {time.time()- start} seconds!")
@@ -130,7 +131,7 @@ print('\n********************       SETING CASE         *******************\n')
     1.1 benchmark homogeneo, permeabilidade = identidade
     1.2 Exemplo 1.1 do item 4.4.4 da Tese de Darlan
     1.3 homogêneo com poços
-    1.4 Buckley-Leverett com poços
+    1.4 Case Study 3 do Xue Li(2012)
 
 2. Benchmark com apenas deformação
 
@@ -142,14 +143,14 @@ print('\n********************       SETING CASE         *******************\n')
     2. demiredzic et al 1998, totalmente dirichlet
     2. demiredzic et al 1998, com Fy = 5e9 N e u = 0 em x = 1, resto dirichlet
     2.8 exemplo 1 de demiredzic et al 1998
-    2.9 placa com furo sobre carregamento 
+    2.9 placa com furo sobre carregamento
 ------------------------------------------------------------------------
 '''
 prep_time = time.time()
 start = time.time()
 
 # case = 1.1 sem o ponto
-case = 31
+case = 14
 benchmark = set_benchmark(case,malha)
 
 print(f"Benchmark set successfuly! Only took {time.time()- start} seconds!")
@@ -200,8 +201,8 @@ start = time.time()
 
 misc_par = set_nlfv_misc(mesh)
 flux_par = set_nlfv_flux(mesh,rocks.perm,misc_par)
-rc_par = set_nlfv_flux(mesh,rocks.elastic.G,misc_par)
-stress_par = set_nlfv_stress(mesh,rocks.elastic,misc_par)
+#rc_par = set_nlfv_flux(mesh,rocks.elastic.G,misc_par)
+#stress_par = set_nlfv_stress(mesh,rocks.elastic,misc_par)
 
 
 print(f'NLFV parameters generated successfuly! Only took {time.time() - start} seconds!')
@@ -220,10 +221,17 @@ flux_discr = MPFAH(mesh,fluids,wells,bc_val,misc_par,flux_par)
 
 #print(f'Flux discretization done successfuly! Only took {time.time() - start} seconds!')
 
-rc_discr = MPFAH(mesh,fluids,wells,bc_val,misc_par,rc_par)
-coupling = RCIN() 
+#rc_discr = MPFAH(mesh,fluids,wells,bc_val,misc_par,rc_par)
+#coupling = RCIN() 
 
 print(f'Continuity Equation discretization done successfuly! Only took {time.time() - start} seconds!')
+
+#-----------------------------------------------------------------------------
+print('\n*********************    IMPLICIT-EULER     *********************\n')
+#-----------------------------------------------------------------------------
+
+run = implicit_euler(rocks,fluids,0,1)
+run.unsteady_solver(mesh,benchmark,flux_discr,rocks,fluids,sol)
 
 #-----------------------------------------------------------------------------
 print('\n*********************    MOMENTUM-DISCR     *********************\n')
@@ -236,11 +244,15 @@ stress_discr = MPSAH(mesh,rocks,bc_val,misc_par,stress_par)
 
 stress_discr.steady_solver(sol)
 
-stress_discr.displ_interp(mesh,bc_val,sol.displacement.field_num,misc_par,stress_par)
+sol.error()
+sol.export(mesh,benchmark)
+sol.plot_line(mesh,benchmark)
+
+#stress_discr.displ_interp(mesh,bc_val,sol.displacement.field_num,misc_par,stress_par)
 
 #print(f'Stress discretization done successfuly! Only took {time.time() - start} seconds!')
 
-grad_discr = PGHP(mesh,misc_par)
+#grad_discr = PGHP(mesh,misc_par)
 
 print(f'Momentum Equation discretization done successfuly! Only took {time.time() - start} seconds!')
 
@@ -251,7 +263,7 @@ print('\n*********************     FIXED-STRAIN      *********************\n')
 start = time.time()
 
 print('Simulation Start!')
-
+"""
 run = FSSPC(mesh,
             benchmark,
             rocks,
@@ -266,5 +278,6 @@ run = FSSPC(mesh,
             stress_discr,
             grad_discr,
             coupling)
+"""
 
 print("fim")

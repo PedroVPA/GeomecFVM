@@ -571,7 +571,7 @@ class MPSAH:
         self.I_row = []
         self.I_data = []
 
-        self.boundary_displacemenet(mesh,bc_val,stress_par)
+        self.boundary_displacemenet(mesh,bc_val,misc_par,stress_par)
 
         IsNeu = bc_val.hdispl.neu_edges 
         value = bc_val.hdispl.bc_value
@@ -660,7 +660,7 @@ class MPSAH:
 
         del self.M_row, self.M_col, self.M_data,self.I_row, self.I_data
 
-    def boundary_displacemenet(self,mesh,bc_val,stress_par):
+    def boundary_displacemenet(self,mesh,bc_val,misc_par,stress_par):
 
         nbe = mesh.edges.boundary.shape[0]
         shape = mesh.faces.classify_element[:].max() + 1
@@ -1055,6 +1055,16 @@ class MPSAH:
 
                     C = A[:,displ_known]
                     B = np.hstack([B,C])
+
+                    if np.isclose(np.linalg.det(A[:,displ_unknown][displ_unknown,:]),0):
+
+                        A = np.unique(A,axis = 0) 
+                        B = np.unique(B,axis = 0)
+
+                        lef = misc_par.interface_elems[edge,0]
+
+
+
                     U[displ_unknown] = np.linalg.solve(A[:,displ_unknown][displ_unknown,:],B[displ_unknown])
 
                     H[displ_known] = -1
@@ -1082,7 +1092,6 @@ class MPSAH:
     def boundary_displacemenet1(self,mesh,bc_val,stress_par):
 
         nbe = mesh.edges.boundary.shape[0]
-        shape = mesh.faces.classify_element[:].max() + 1
 
         trans = stress_par.trans
         hpoints = stress_par.aux_point
@@ -1102,119 +1111,11 @@ class MPSAH:
             unknown_displ = np.array([np.isin(edge,IsNeux),
                                       np.isin(edge,IsNeuy)])
 
-            ksi1 = trans.xx[edge,0]
-            hp1 = hpoints.xx[edge,0]
-
-            if hpoints.xx[edge,0,1] == edge:
-
-                ksi1 = np.flip(ksi1)
-                hp1 = np.flip(hp1)
+            hp = np.array([hpoints.xx[edge,0],
+                           hpoints.xy[edge,0],
+                           hpoints.yx[edge,0],
+                           hpoints.yy[edge,0]])
             
-            ksi2 = trans.xy[edge,0]
-            hp2 = hpoints.xy[edge,0]
-
-            if hpoints.xy[edge,0,1] == edge:
-
-                ksi2 = np.flip(ksi2)
-                hp2 = np.flip(hp2)
-            
-            ksi3 = trans.yx[edge,0]
-            hp3 = hpoints.yx[edge,0]
-
-            if hpoints.yx[edge,0,1] == edge:
-
-                ksi3 = np.flip(ksi3)
-                hp3 = np.flip(hp3)
-
-            ksi4 = trans.yy[edge,0]
-            hp4 = hpoints.yy[edge,0]
-
-            if hpoints.yy[edge,0,1] == edge:
-
-                ksi4 = np.flip(ksi4)
-                hp4 = np.flip(hp4)
-
-            aux_points = np.array([hp1, hp2, hp3, hp4])
-
-            aux_edges = np.unique(aux_points)
-
-            aux_edges = aux_edges[aux_edges != edge]
-
-            aux_InNeu = np.isin(aux_edges,neu_edges)
-
-            if aux_InNeu.sum() == 0:
-                
-                if unknown_displ.sum() == 1:
-
-                    if unknown_displ[0]:
-
-                        self.u_ij[edge,0] = np.array([ksi1.sum(),
-                                                      ksi2.sum(),
-                                                      valuex[edge]])/ksi1[0]
-
-                        self.u_ij[edge,1] = np.array([ksi1[1],
-                                                      ksi2[0],
-                                                      ksi2[1]])/ksi1[0]
-
-                        self.u_ij[edge,2] = np.array([hp1[1],
-                                                      hp2[0],
-                                                      hp2[1]])
-
-                    if unknown_displ[1]:
-
-                        self.v_ij[edge,0] = np.array([ksi3.sum(),
-                                                      ksi4.sum(),
-                                                      valuey[edge]])/ksi4[0]
-
-                        self.v_ij[edge,1] = np.array([ksi4[1],
-                                                      ksi3[0],
-                                                      ksi3[1]])/ksi4[0]
-
-                        self.v_ij[edge,2] = np.array([hp4[1],
-                                                      hp3[0],
-                                                      hp3[1]])
-
-                if unknown_displ.sum() == 2:
-                    
-                    A = np.array([[ksi1[0], ksi2[0]], [ksi3[0], ksi4[0]]])
-
-                    B = np.zeros([2,5])
-
-                    B[0,:] = np.array([ksi1.sum(),
-                                    ksi2.sum(),
-                                    valuex[edge],
-                                    ksi1[1],
-                                    ksi2[1]])
-
-                    B[1,:] = np.array([ksi3.sum(),
-                                    ksi4.sum(),
-                                    valuey[edge],
-                                    ksi3[1],
-                                    ksi4[1]])
-
-                    X = np.linalg.solve(A,B)
-
-                    self.u_ij[edge,0] = X[0,:3]
-
-                    self.u_ij[edge,1] = np.array([X[0,3], 0, X[0,4]])
-
-                    self.u_ij[edge,2] = np.array([hp1[1],
-                                                -1,
-                                                hp2[1]])
-
-                    self.v_ij[edge,0] = X[1,:3]
-
-                    self.v_ij[edge,1] = np.array([X[1,4], 0, X[1,3]])
-
-                    self.v_ij[edge,2] = np.array([hp4[1],
-                                                -1,
-                                                hp3[1]])
-
-            else:
-                pass
-
-            print('lmao')
-
     def centroid_coeff(self,nbe,IsDir,interface,Force,xy):
 
         lef = interface[IsDir,0]
